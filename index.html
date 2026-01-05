@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REGEANIME.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@1,800&family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --iphone-w: 520px; --iphone-h: 250px; }
+        body { font-family: 'Inter', sans-serif; background: #fff; margin: 0; scroll-behavior: smooth; overflow-x: hidden; }
+
+        /* --- ACCUEIL / HERO --- */
+        .hero-view {
+            height: 100vh; width: 100%;
+            background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.5)), 
+                        url('https://images.unsplash.com/photo-1692290572102-3f3e02abab55?fm=jpg&q=60&w=3000') no-repeat center center;
+            background-size: cover;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: relative;
+        }
+
+        /* --- BARRE DE RECHERCHE --- */
+        .search-bar-container {
+            position: absolute;
+            width: 380px;
+            z-index: 1100;
+            top: 38%;
+            left: 50%;
+            transform: translate(-50%, 0);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .search-input {
+            width: 100%; padding: 14px 25px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 16px;
+            color: white; outline: none; text-align: center;
+            transition: all 0.4s ease;
+            font-weight: 500;
+        }
+
+        /* --- IPHONE & EXPLOSION --- */
+        .iphone-frame {
+            width: var(--iphone-w); height: var(--iphone-h);
+            background: #141414; border-radius: 48px; padding: 10px;
+            position: relative; border: 1px solid #2a2a2a;
+            box-shadow: 0 40px 100px -20px rgba(0,0,0,0.8);
+            z-index: 1000;
+            /* Courbe Apple-style pour l'expansion */
+            transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+        }
+
+        .iphone-screen {
+            width: 100%; height: 100%;
+            background-position: center; background-size: cover; 
+            border-radius: 38px; overflow: hidden;
+            display: flex; align-items: center; justify-content: center; position: relative;
+            transition: background 0.5s ease;
+        }
+
+        /* --- LOGIQUE D'EXPLOSION --- */
+        body.is-searching { overflow: hidden; }
+
+        body.is-searching .iphone-frame {
+            position: fixed;
+            top: 0 !important; left: 0 !important;
+            width: 100vw; height: 100vh;
+            border-radius: 0; border: none;
+            padding: 0;
+            transform: scale(1.05); /* Petit effet de rebond à l'entrée */
+            animation: settle 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes settle { to { transform: scale(1); } }
+
+        body.is-searching .iphone-screen { 
+            border-radius: 0; 
+            background: white !important; 
+            background-image: none !important; 
+        }
+        
+        body.is-searching .notification-stack,
+        body.is-searching .splash-title, 
+        body.is-searching .charger-container,
+        body.is-searching .scroll-indicator { 
+            opacity: 0 !important; 
+            transform: translateY(-20px);
+            transition: all 0.4s ease;
+        }
+
+        body.is-searching .search-bar-container { 
+            top: 40px; 
+            width: 600px;
+        }
+
+        body.is-searching .search-input { 
+            background: rgba(0,0,0,0.03); 
+            color: black; 
+            border-color: rgba(0,0,0,0.08); 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        /* --- ZONE RÉSULTATS --- */
+        .results-overlay {
+            position: fixed; top: 130px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 800px; z-index: 1050;
+            display: none; opacity: 0; 
+            /* Apparaît avec un léger retard pour laisser le blanc s'installer */
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition-delay: 0.2s;
+        }
+        body.is-searching .results-overlay { 
+            display: block; 
+            opacity: 1; 
+            transform: translate(-50%, 10px); 
+        }
+
+        /* --- NOTIFS & CHARGEUR --- */
+        .notification-stack { position: relative; width: 70%; height: 100%; display: flex; justify-content: center; cursor: pointer; transition: all 0.4s ease; }
+        .apple-notif { background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(25px); padding: 12px 20px; border-radius: 26px; display: flex; align-items: center; gap: 15px; width: 100%; border: 1px solid rgba(255,255,255,0.08); position: absolute; z-index: 20; top: 120px; }
+        .notif-under { position: absolute; top: 120px; opacity: 0; width: 92%; height: 75px; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(15px); border-radius: 26px; border: 1px solid rgba(255,255,255,0.05); z-index: 10; transform: scale(0.9); display: flex; align-items: flex-end; padding: 0 20px 10px 20px; gap: 15px; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .notification-stack:hover .notif-under { top: 143px; opacity: 1; transform: scale(0.96); }
+
+        .charger-container { position: absolute; left: calc(50% + (var(--iphone-w) / 2) - 10px); top: 50%; transform: translateY(-50%); width: 100vw; pointer-events: none; z-index: 5; transition: opacity 0.4s ease; }
+        .connector { width: 35px; height: 18px; background: #e5e5e5; border-radius: 4px; position: absolute; left: 0; top: 91px; box-shadow: inset -2px 0 5px rgba(0,0,0,0.1); }
+        .cable { position: absolute; left: 30px; top: 0px; overflow: visible; }
+        .scroll-indicator { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); z-index: 100; cursor: pointer; animation: arrowBounce 2s infinite; opacity: 0.7; transition: all 0.4s ease; }
+        
+        @keyframes arrowBounce { 0%, 20%, 50%, 80%, 100% { transform: translate(-50%, 0); } 40% { transform: translate(-50%, -10px); } 60% { transform: translate(-50%, -5px); } }
+
+        /* --- RESTE DU SITE --- */
+        .site-view { min-height: 100vh; background: #fff; padding: 100px 5%; position: relative; z-index: 1; }
+    </style>
+</head>
+<body>
+
+    <section class="hero-view">
+        <h1 class="splash-title text-white font-black italic text-[5vw] mb-12 tracking-tighter">REGEANIME.</h1>
+
+        <div class="search-bar-container">
+            <input type="text" id="mainSearch" class="search-input" placeholder="Rechercher un anime...">
+        </div>
+
+        <div class="charger-container">
+            <div class="connector"></div>
+            <svg class="cable" width="1000" height="200" viewBox="0 0 1000 200">
+                <path d="M 0,100 C 150,100 200,180 400,150 S 600,20 1000,80" fill="none" stroke="#f0f0f0" stroke-width="8" stroke-linecap="round" />
+            </svg>
+        </div>
+
+        <div class="iphone-frame" id="phone">
+            <div class="iphone-screen" style="background-image: url('https://img.youtube.com/vi/1A_GBcMRYJw/maxresdefault.jpg');">
+                <div class="notification-stack">
+                    <div class="apple-notif">
+                        <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                        <div class="text-white">
+                            <h3 class="font-bold text-sm tracking-tight">Vinland Saga</h3>
+                            <p class="text-[10px] uppercase font-bold tracking-widest text-gray-400">Épisode 12</p>
+                        </div>
+                    </div>
+                    <div class="notif-under">
+                        <div class="text-white">
+                            <h3 class="font-bold text-[10px] tracking-tight opacity-90">Ambre ❤️</h3>
+                            <p class="text-[10px] opacity-80 leading-none">tu me manques</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="#main-content" class="scroll-indicator">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+            </svg>
+        </a>
+    </section>
+
+    <div class="results-overlay" id="results">
+        <h2 class="text-2xl font-black italic uppercase text-black mb-8 opacity-80">Suggestions</h2>
+        <div class="space-y-4">
+            <div class="flex items-center gap-5 p-5 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all duration-300 cursor-pointer group">
+                <div class="w-14 h-20 bg-gray-200 rounded-xl overflow-hidden shadow-sm group-hover:shadow-md transition-all">
+                    <img src="https://img.youtube.com/vi/1A_GBcMRYJw/maxresdefault.jpg" class="w-full h-full object-cover">
+                </div>
+                <div>
+                    <p class="font-bold text-black text-xl">Vinland Saga</p>
+                    <p class="text-sm text-gray-400 font-medium">Saison 2 • MAPPA Studio</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main id="main-content" class="site-view">
+        <h2 class="text-4xl font-black italic text-black mb-12 tracking-tighter">DERNIÈRES SORTIES</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div class="h-80 bg-gray-100 rounded-[32px] border border-gray-100"></div>
+            <div class="h-80 bg-gray-100 rounded-[32px] border border-gray-100"></div>
+            <div class="h-80 bg-gray-100 rounded-[32px] border border-gray-100"></div>
+        </div>
+    </main>
+
+    <script>
+        const searchInput = document.getElementById('mainSearch');
+        const body = document.body;
+
+        searchInput.addEventListener('input', (e) => {
+            if (e.target.value.length > 0) {
+                body.classList.add('is-searching');
+            } else {
+                body.classList.remove('is-searching');
+            }
+        });
+
+        window.addEventListener('scroll', () => {
+            // Désactive le mouvement de l'iPhone au scroll pour plus de stabilité
+            if (body.classList.contains('is-searching')) return;
+            
+            const scroll = window.scrollY;
+            const phone = document.getElementById('phone');
+            const container = document.querySelector('.charger-container');
+            const title = document.querySelector('.splash-title');
+            
+            // On réduit le multiplicateur (0.15 au lieu de 0.3) pour que ce soit plus subtil
+            const move = scroll * 0.15;
+            phone.style.transform = `translateY(${move}px)`;
+            container.style.transform = `translateY(calc(-50% + ${move}px))`;
+            if(title) title.style.transform = `translateY(${move * 0.5}px)`;
+        });
+    </script>
+</body>
+</html>
